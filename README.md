@@ -9,3 +9,5 @@ However if you wish to modify the BCX code then you will have to make edits to t
 ## Credits
 Syroot/Pac-Man: Original Creator of WormKitTools
 Carlmundo: Creator of the modifed WormKitTools called FrontendKitLib
+Jig and Ser: Edits of their Worms 2 start game button bitmaps from W2SE
+Team17: Worms 2 Assets

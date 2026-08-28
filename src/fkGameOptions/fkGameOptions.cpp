@@ -173,7 +173,7 @@ char*   join (int, ... );
 // *************************************************
 //          User Defined Types And Unions
 // *************************************************
-// @TODO Once Complete make sure to convert the C++ code into a switch case to make WinAPI happy.
+// @TODO Once Complete make sure to convert the DllMain C++ code into a switch case to make WinAPI happy.
 // Mostly to be safe and to make sure MSVC doesn ' t get a bug up its bum.
 
 // *************************************************
@@ -182,6 +182,12 @@ char*   join (int, ... );
 
 static char    CRLF[3]= {13,10,0}; // Carr Rtn & Line Feed
 
+
+// *************************************************
+//            User's Global Variables
+// *************************************************
+
+static BOOL    iniEnableW2SE;
 
 // *************************************************
 //               User's Prototypes
@@ -247,6 +253,11 @@ char *join(int n, ...)
 
 void Configure ()
 {
+  fk::Config config("fkGameOptions.ini");
+  // Load the ini settings.
+  config .get("Frontend","W2seEnabled",iniEnableW2SE,FALSE);
+  // Then set its default setting when created.
+  config .set("Frontend","W2seEnabled",iniEnableW2SE);
 }
 
 
@@ -257,27 +268,20 @@ void patch (PEInfo &  pe,int gameVersion)
 
 __declspec(dllexport) BOOL WINAPI DllMain (HINSTANCE  hInst,DWORD Reason,LPVOID  Reserved)
 {
+  //**************************************************************
   if(Reason==DLL_PROCESS_ATTACH ){
       // Shameless copy+paste and conversion job from other FrontEndKit Modules.
       // But if it ' s what they use by default i guess it'll do.
       PEInfo pe;
       int      tds=pe.FH->TimeDateStamp;
       int      version=fk::getGameVersion(tds);
+      BOOLEAN  SuperEdiExists=std::filesystem::exists("SuperEdi.exe");
       // Check to see if W2SE Exists.
-      if(!std::filesystem::exists("SuperEdi.exe");){
-          // If not bring up a Error message and detatch the module.
-          char    MyMsg1[BCXSTRSIZE];
-          strcpy(MyMsg1, join(6,"Worms 2 Super Editor was not found in your Worms 2 directory. ",CRLF,"Please check to see if it is installed in your root Worms 2 directory: e.g. C:\\GOG Games\\Worms 2",CRLF,CRLF,"Click OK to detach this module."));
-          MessageBox (GetActiveWindow(),MyMsg1,"fkGameOptions: SuperEdi.exe not found!",MB_OK|MB_ICONHAND|MB_APPLMODAL );
-          return FALSE;
-        }
-      else
-        {
-          // Otherwise initialize the module by checking the game version first.
-          // The shameless copy+paste and conversion job continues!
+      if(SuperEdiExists ){
+          // Initialize the module by checking the game version first.
           if(version==fk::GAME_VERSION_NONE ){
               char    MyMsg2[BCXSTRSIZE];
-              strcpy(MyMsg2, join(3,"fkGameOptions is incompatible with whatever game version you got. ",CRLF,"Please use the v1.05 or TryMedia 1.07 release of Worms 2. Otherwise, you can remove this warning by moving the module out or deleting it."));
+              strcpy(MyMsg2, join(3,"fkGameOptions is incompatible with whatever game version you got. ",CRLF,"Please use the v1.05 or TryMedia v1.07 release of Worms 2. Otherwise, you can remove this warning by moving the module out or deleting it."));
               MessageBox (GetActiveWindow(),MyMsg2,"fkGameOptions: Incompatible Game Version!",MB_OK|MB_ICONEXCLAMATION );
             }
           else
@@ -287,6 +291,14 @@ __declspec(dllexport) BOOL WINAPI DllMain (HINSTANCE  hInst,DWORD Reason,LPVOID 
               patch(pe,version);
               MessageBox (GetActiveWindow(),"fkGameOptions has been loaded! HUZZAH!","",0 );
             }
+        }
+      else
+        {
+          // If not bring up a Error message and detatch the module.
+          char    MyMsg1[BCXSTRSIZE];
+          strcpy(MyMsg1, join(6,"Worms 2 Super Editor was not found in your Worms 2 directory. ",CRLF,"Please check to see if it is installed in your root Worms 2 directory: e.g. C:\\GOG Games\\Worms 2",CRLF,CRLF,"Click OK to detach this module."));
+          MessageBox (GetActiveWindow(),MyMsg1,"fkGameOptions: SuperEdi.exe not found!",MB_OK|MB_ICONHAND|MB_APPLMODAL );
+          return FALSE;
         }
       //**************************************************************
       goto L1000;
