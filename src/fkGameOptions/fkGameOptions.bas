@@ -18,7 +18,9 @@ SUB Configure()
     REM Then set its default setting when created.
     config.SET("Frontend", "W2seEnabled", iniEnableW2SE)
 END SUB
-
+$COMMENT
+    @TODO Once complete get the ASM blocks in the C++ code to be one.
+$COMMENT
 FUNCTION VanillaGameStart(HndlWnd AS HWND) AS BOOLEAN
     REM This is a decompiled and translated version of the actual start game script called by the frontend as output by Ghidra.
     REM With maybe an alteration here and there. Here for the purpose of the quick game buttons keeping their vanilla functionality.

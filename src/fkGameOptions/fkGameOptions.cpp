@@ -173,6 +173,7 @@ char*   join (int, ... );
 // *************************************************
 //          User Defined Types And Unions
 // *************************************************
+//     @TODO Once complete get the ASM blocks in the C++ code to be one.
 // @TODO Once Complete make sure to convert the DllMain C++ code into a switch case to make WinAPI happy.
 // Mostly to be safe and to make sure MSVC doesn ' t get a bug up its bum.
 
