@@ -194,6 +194,7 @@ static BOOL    iniEnableW2SE;
 // *************************************************
 
 void    Configure (void);
+BOOL    VanillaGameStart (HWND);
 void    patch (PEInfo &,int);
 __declspec(dllexport) BOOL WINAPI DllMain (HINSTANCE,DWORD,LPVOID);
 
@@ -257,12 +258,82 @@ void Configure ()
   // Load the ini settings.
   config .get("Frontend","W2seEnabled",iniEnableW2SE,FALSE);
   // Then set its default setting when created.
-  config .set("Frontend","W2seEnabled",iniEnableW2SE);
+  config .SET("Frontend","W2seEnabled",iniEnableW2SE);
+}
+
+
+BOOL VanillaGameStart (HWND HndlWnd)
+{
+  // This is a decompiled and translated version of the actual start game script called by the frontend as output by Ghidra.
+  // With maybe an alteration here and there. Here for the purpose of the quick game buttons keeping their vanilla functionality.
+  // Meanwhile the other start game buttons launch to W2SE. Hope and pray no one plays pure vanilla Worms 2 these days!
+  BOOLEAN  GameStarted= {0};
+  HANDLE   hHandle= {0};
+  int      iVar1= {0};
+  HINSTANCE  pHVar= {0};
+  if(HndlWnd==NULL ){
+      GameStarted=FALSE;
+    }
+  else
+    {
+      hHandle=CreateEvent(NULL,TRUE,FALSE,Worms2ExitEvent);
+      // Unfortunately I have to do inline assembly using the disassembly here. Too bad!
+      // I did decompilation for one function I ' m not doing it for another.
+      // Especially as that function has functions within functions. Functionception.
+#if defined (__POCC__) && !defined(__cplusplus)
+  #pragma optimize(none)  // No Optimizations in ASM block
+#elif !defined (__cplusplus)
+  #pragma optimize(0)  // No Optimizations in ASM block
+#endif
+#if !defined(__POCC__) && !defined (__cplusplus)
+_asm("push 00518064")	//load game.dat as a parameter.
+#else
+__asm{push 00518064}	//load game.dat as a parameter.
+#endif
+#if !defined(__POCC__) && !defined (__cplusplus)
+_asm("mov ecx, [iVar1-08]")	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
+#else
+__asm{mov ecx, [iVar1-08]}	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
+#endif
+#if !defined(__POCC__) && !defined (__cplusplus)
+_asm("call 00402BA3")	//just hope and pray you put iVar1 in the correct spot!
+#else
+__asm{call 00402BA3}	//just hope and pray you put iVar1 in the correct spot!
+#endif
+#if defined (__POCC__) && !defined(__cplusplus)
+  #pragma optimize()  // Restoring Optimizer state
+#elif !defined (__cplusplus)
+  #pragma optimize(1)  // Restoring Optimizer state
+#endif
+      if(iVar1==1 ){
+          // WE MADE IT FINALLY!
+          pHVar=ShellExecute(hHandle,"open","worms2.exe","colin.dat",NULL,SW_SHOW);
+          // Dunno why W2 needs to check if it ' s less than 32 for the instance. Maybe a null or 32-bit computing check?
+          if(32<(int)pHVar ){
+              WaitForSingleObject(hHandle,INFINITE);
+            }
+        }
+    }
+  return GameStarted;
 }
 
 
 void patch (PEInfo &  pe,int gameVersion)
 {
+  if(gameVersion==wk::GAMEID_W2_1_07_TRY ){
+      if(iniEnableW2SE==TRUE ){
+          // Make Sure that the quick game buttons and whatever else does an auto-generated game (i.e. the screensaver demo) doesn ' t get affected.
+          // Mostly through a decompiled version of the Start game Function.
+          fk::Patch::jump(pe.Offset(0x00009D53),5, &VanillaGameStart,fk::IJ_JUMP);
+          fk::Patch::jump(pe.Offset(0x0000A06F),5, &VanillaGameStart,fk::IJ_JUMP);
+          fk::Patch::jump(pe.Offset(0x0000A648),5, &VanillaGameStart,fk::IJ_JUMP);
+          // Everything else gets the W2SE Patch.
+          fk::Patch::Patch(pe.Offset(0x00118080),"SuperEdi.exe");
+        }
+    }
+  else
+    {
+    }
 }
 
 

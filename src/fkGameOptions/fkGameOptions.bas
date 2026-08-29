@@ -1,7 +1,8 @@
 $NODLLMAIN
-$DLL
+$DLL STDCALL
 $CPP
 $REMS
+$RESOURCE "C:\Users\aidan\Documents\MSVC-14.51.36231\MSVC\Windows Kits\10\bin\10.0.28000.0\x64\rc.exe" "PatchResources.rc"
 #include <filesystem>
 #include "fkConfig.h"
 #include "fkPatch.h"
@@ -15,11 +16,58 @@ SUB Configure()
     REM Load the ini settings.
     config.get("Frontend", "W2seEnabled", iniEnableW2SE, FALSE)
     REM Then set its default setting when created.
-    config.set("Frontend", "W2seEnabled", iniEnableW2SE)
+    config.SET("Frontend", "W2seEnabled", iniEnableW2SE)
 END SUB
 
+FUNCTION VanillaGameStart(HndlWnd AS HWND) AS BOOLEAN
+    REM This is a decompiled and translated version of the actual start game script called by the frontend as output by Ghidra.
+    REM With maybe an alteration here and there. Here for the purpose of the quick game buttons keeping their vanilla functionality.
+    REM Meanwhile the other start game buttons launch to W2SE. Hope and pray no one plays pure vanilla Worms 2 these days!
+    DIM GameStarted AS BOOLEAN
+    DIM hHandle AS HANDLE
+    DIM iVar1 AS INT
+    DIM pHVar AS HINSTANCE
+
+    IF HndlWnd == NULL THEN
+        GameStarted = FALSE
+    ELSE
+        hHandle = CreateEvent(NULL, TRUE, FALSE, Worms2ExitEvent)
+        REM Unfortunately I have to do inline assembly using the disassembly here. Too bad!
+        REM I did decompilation for one function I ' m not doing it for another.
+        REM Especially as that function has functions within functions. Functionception.
+        $ASM
+            push 00518064 ;load game.dat as a parameter.
+            mov ecx, [iVar1-08] ;setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
+            call 00402BA3 ;just hope and pray you put iVar1 in the correct spot!
+        $ASM
+        IF iVar1 == 1 THEN
+            REM WE MADE IT FINALLY!
+            pHVar = ShellExecute(hHandle, "open", "worms2.exe", "colin.dat", NULL, SW_SHOW)
+            REM Dunno why W2 needs to check if it ' s less than 32 for the instance. Maybe a null or 32-bit computing check?
+            IF 32 < (INT)pHVar THEN
+                WaitForSingleObject(hHandle, INFINITE)
+            END IF
+        END IF
+    END IF
+    FUNCTION = GameStarted
+END FUNCTION
+
+
+REM Allocation Base Starts at 0x00400000. Whatever is added on is the offset.
 SUB patch(pe AS PEInfo&, gameVersion AS INT)
-    fk::Patch::jump()
+    IF gameVersion == wk::GAMEID_W2_1_07_TRY THEN
+        IF iniEnableW2SE = TRUE THEN
+            REM Make Sure that the quick game buttons and whatever else does an auto-generated game (i.e. the screensaver demo) doesn ' t get affected.
+            REM Mostly through a decompiled version of the Start game Function.
+            fk::Patch::jump(pe.Offset(0x00009D53), 5, &VanillaGameStart, fk::IJ_JUMP)
+            fk::Patch::jump(pe.Offset(0x0000A06F), 5, &VanillaGameStart, fk::IJ_JUMP)
+            fk::Patch::jump(pe.Offset(0x0000A648), 5, &VanillaGameStart, fk::IJ_JUMP)
+            REM Everything else gets the W2SE Patch.
+            fk::Patch::Patch(pe.Offset(0x00118080), "SuperEdi.exe")
+        END IF
+    ELSE
+
+    END IF
 END SUB
 
 $COMMENT
