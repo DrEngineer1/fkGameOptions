@@ -196,6 +196,7 @@ static BOOL    iniEnableW2SE;
 
 void    Configure (void);
 BOOL    VanillaGameStart (HWND);
+void    PatchResource (LPCWSTR,LPCWSTR,const LPCWSTR,DWORD,LPVOID,WORD= 0);
 void    patch (PEInfo &,int);
 __declspec(dllexport) BOOL WINAPI DllMain (HINSTANCE,DWORD,LPVOID);
 
@@ -259,7 +260,7 @@ void Configure ()
   // Load the ini settings.
   config .get("Frontend","W2seEnabled",iniEnableW2SE,FALSE);
   // Then set its default setting when created.
-  config .SET("Frontend","W2seEnabled",iniEnableW2SE);
+  config .set("Frontend","W2seEnabled",iniEnableW2SE);
 }
 
 
@@ -277,7 +278,7 @@ BOOL VanillaGameStart (HWND HndlWnd)
     }
   else
     {
-      hHandle=CreateEvent(NULL,TRUE,FALSE,Worms2ExitEvent);
+      hHandle=CreateEvent(NULL,TRUE,FALSE,"Worms2ExitEvent");
       // Unfortunately I have to do inline assembly using the disassembly here. Too bad!
       // I did decompilation for one function I ' m not doing it for another.
       // Especially as that function has functions within functions. Functionception.
@@ -287,19 +288,19 @@ BOOL VanillaGameStart (HWND HndlWnd)
   #pragma optimize(0)  // No Optimizations in ASM block
 #endif
 #if !defined(__POCC__) && !defined (__cplusplus)
-_asm("push 00518064")	//load game.dat as a parameter.
+_asm("push [0x00518064]")	//load game.dat as a parameter.
 #else
-__asm{push 00518064}	//load game.dat as a parameter.
+__asm{push [0x00518064]}	//load game.dat as a parameter.
 #endif
 #if !defined(__POCC__) && !defined (__cplusplus)
-_asm("mov ecx, [iVar1-08]")	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
+_asm("mov ecx, [iVar1-0x08]")	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
 #else
-__asm{mov ecx, [iVar1-08]}	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
+__asm{mov ecx, [iVar1-0x08]}	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
 #endif
 #if !defined(__POCC__) && !defined (__cplusplus)
-_asm("call 00402BA3")	//just hope and pray you put iVar1 in the correct spot!
+_asm("call [0x00402BA3]")	//just hope and pray you put iVar1 in the correct spot!
 #else
-__asm{call 00402BA3}	//just hope and pray you put iVar1 in the correct spot!
+__asm{call [0x00402BA3]}	//just hope and pray you put iVar1 in the correct spot!
 #endif
 #if defined (__POCC__) && !defined(__cplusplus)
   #pragma optimize()  // Restoring Optimizer state
@@ -319,9 +320,28 @@ __asm{call 00402BA3}	//just hope and pray you put iVar1 in the correct spot!
 }
 
 
+void PatchResource (LPCWSTR  FileStub,LPCWSTR  ResType,const LPCWSTR  PatchResName,DWORD PatchResSize,LPVOID  PatchResDat,WORD  LangID)
+{
+  // The Wall of parameters. Why Microsoft... why...
+  // Let's break down all these parameters for the poor sap that looks upon this:
+  // FileStub: the OG file name.
+  // ResType: The resource type for both the OG and Patch.
+  // PatchResName: The name of our resource to overide.
+  // LangID: (Optional) The language of the resource. Defaulted to Language Neutral as it's a required parameter in UpdateResource.
+  // PatchResDat: (Optional) Binary data of the resource. Equivalent to lpData in UpdateResoure.
+  HANDLE   ResHandle= {0};
+  // This really shouldn't be 3 whole functions. But Microsoft made it this way so no way around this other than this function.
+  // Also don't delete the files as this is just a overide. Not full replacement.
+  ResHandle=BeginUpdateResourceW(FileStub,FALSE);
+  UpdateResourceW(ResHandle,ResType,PatchResName,LangID,PatchResDat,PatchResSize);
+  // Lastly finish up everything. Have I already made it clear that this is stupid?
+  EndUpdateResourceW(ResHandle,FALSE);
+}
+
+
 void patch (PEInfo &  pe,int gameVersion)
 {
-  if(gameVersion==wk::GAMEID_W2_1_07_TRY ){
+  if(gameVersion==fk::GAME_VERSION_TRY ){
       if(iniEnableW2SE==TRUE ){
           // Make Sure that the quick game buttons and whatever else does an auto-generated game (i.e. the screensaver demo) doesn ' t get affected.
           // Mostly through a decompiled version of the Start game Function.
@@ -330,6 +350,9 @@ void patch (PEInfo &  pe,int gameVersion)
           fk::Patch::jump(pe.Offset(0x0000A648),5, &VanillaGameStart,fk::IJ_JUMP);
           // Everything else gets the W2SE Patch.
           fk::Patch::Patch(pe.Offset(0x00118080),"SuperEdi.exe");
+          // Lastly patch out resources for now. Particularly the Go buttons. Hope and pray this works...
+          // CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(235), 7400, , "StartDown")
+          // CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(237), 7400, , "StartUp")
         }
     }
   else

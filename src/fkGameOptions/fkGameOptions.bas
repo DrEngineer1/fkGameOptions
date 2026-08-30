@@ -16,7 +16,7 @@ SUB Configure()
     REM Load the ini settings.
     config.get("Frontend", "W2seEnabled", iniEnableW2SE, FALSE)
     REM Then set its default setting when created.
-    config.SET("Frontend", "W2seEnabled", iniEnableW2SE)
+    config.set("Frontend", "W2seEnabled", iniEnableW2SE)
 END SUB
 $COMMENT
     @TODO Once complete get the ASM blocks in the C++ code to be one.
@@ -33,14 +33,14 @@ FUNCTION VanillaGameStart(HndlWnd AS HWND) AS BOOLEAN
     IF HndlWnd == NULL THEN
         GameStarted = FALSE
     ELSE
-        hHandle = CreateEvent(NULL, TRUE, FALSE, Worms2ExitEvent)
+        hHandle = CreateEvent(NULL, TRUE, FALSE, "Worms2ExitEvent")
         REM Unfortunately I have to do inline assembly using the disassembly here. Too bad!
         REM I did decompilation for one function I ' m not doing it for another.
         REM Especially as that function has functions within functions. Functionception.
         $ASM
-            push 00518064 ;load game.dat as a parameter.
-            mov ecx, [iVar1-08] ;setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
-            call 00402BA3 ;just hope and pray you put iVar1 in the correct spot!
+            push [0x00518064] ;load game.dat as a parameter.
+            mov ecx, [iVar1-0x08] ;setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
+            call [0x00402BA3] ;just hope and pray you put iVar1 in the correct spot!
         $ASM
         IF iVar1 == 1 THEN
             REM WE MADE IT FINALLY!
@@ -54,10 +54,34 @@ FUNCTION VanillaGameStart(HndlWnd AS HWND) AS BOOLEAN
     FUNCTION = GameStarted
 END FUNCTION
 
+REM This entire function will be added as a function to FrontendKitLib. So no one else will have to suffer what I had to make.
+SUB PatchResource(FileStub AS LPCWSTR, _
+                  ResType AS LPCWSTR, _
+                  PatchResName AS CONST LPCWSTR, _
+                  PatchResSize AS DWORD, _
+                  PatchResDat AS LPVOID, _
+                  LangID AS WORD = 0)
+    REM The Wall of parameters. Why Microsoft... why...
+    REM Let's break down all these parameters for the poor sap that looks upon this:
+    REM FileStub: the OG file name.
+    REM ResType: The resource type for both the OG and Patch.
+    REM PatchResName: The name of our resource to overide.
+    REM LangID: (Optional) The language of the resource. Defaulted to Language Neutral as it's a required parameter in UpdateResource.
+    REM PatchResDat: (Optional) Binary data of the resource. Equivalent to lpData in UpdateResoure.
+    DIM ResHandle AS HANDLE
+    REM This really shouldn't be 3 whole functions. But Microsoft made it this way so no way around this other than this function.
+    REM Also don't delete the files as this is just a overide. Not full replacement.
+    ResHandle = BeginUpdateResourceW(FileStub, FALSE)
+    UpdateResourceW(ResHandle, ResType, PatchResName, LangID, PatchResDat, PatchResSize)
+    REM Lastly finish up everything. Have I already made it clear that this is stupid?
+    EndUpdateResourceW(ResHandle, FALSE)
+END SUB
+
+
 
 REM Allocation Base Starts at 0x00400000. Whatever is added on is the offset.
 SUB patch(pe AS PEInfo&, gameVersion AS INT)
-    IF gameVersion == wk::GAMEID_W2_1_07_TRY THEN
+    IF gameVersion ==  fk::GAME_VERSION_TRY THEN
         IF iniEnableW2SE = TRUE THEN
             REM Make Sure that the quick game buttons and whatever else does an auto-generated game (i.e. the screensaver demo) doesn ' t get affected.
             REM Mostly through a decompiled version of the Start game Function.
@@ -66,6 +90,9 @@ SUB patch(pe AS PEInfo&, gameVersion AS INT)
             fk::Patch::jump(pe.Offset(0x0000A648), 5, &VanillaGameStart, fk::IJ_JUMP)
             REM Everything else gets the W2SE Patch.
             fk::Patch::Patch(pe.Offset(0x00118080), "SuperEdi.exe")
+            REM Lastly patch out resources for now. Particularly the Go buttons. Hope and pray this works...
+            REM CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(235), 7400, , "StartDown")
+            REM CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(237), 7400, , "StartUp")
         END IF
     ELSE
 
