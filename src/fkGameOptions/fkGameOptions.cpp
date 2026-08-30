@@ -196,7 +196,7 @@ static BOOL    iniEnableW2SE;
 
 void    Configure (void);
 BOOL    VanillaGameStart (HWND);
-void    PatchResource (LPCWSTR,LPCWSTR,const LPCWSTR,DWORD,LPVOID,WORD= 0);
+void    PatchResource (LPCWSTR,LPCWSTR,const LPCWSTR,DWORD,LPVOID= NULL,WORD= 0);
 void    patch (PEInfo &,int);
 __declspec(dllexport) BOOL WINAPI DllMain (HINSTANCE,DWORD,LPVOID);
 
@@ -282,6 +282,7 @@ BOOL VanillaGameStart (HWND HndlWnd)
       // Unfortunately I have to do inline assembly using the disassembly here. Too bad!
       // I did decompilation for one function I ' m not doing it for another.
       // Especially as that function has functions within functions. Functionception.
+      // Also the latter 2 asm lines were taken from asking copilot on making it work with MSVC
 #if defined (__POCC__) && !defined(__cplusplus)
   #pragma optimize(none)  // No Optimizations in ASM block
 #elif !defined (__cplusplus)
@@ -298,9 +299,14 @@ _asm("mov ecx, [iVar1-0x08]")	//setup the original decompiled line of: iVar1 = t
 __asm{mov ecx, [iVar1-0x08]}	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
 #endif
 #if !defined(__POCC__) && !defined (__cplusplus)
-_asm("call [0x00402BA3]")	//just hope and pray you put iVar1 in the correct spot!
+_asm("mov eax, [0x00402BA3]")	// have to do this otherwise MSVC throws a hissy fit. copies the call address into eax.
 #else
-__asm{call [0x00402BA3]}	//just hope and pray you put iVar1 in the correct spot!
+__asm{mov eax, [0x00402BA3]}	// have to do this otherwise MSVC throws a hissy fit. copies the call address into eax.
+#endif
+#if !defined(__POCC__) && !defined (__cplusplus)
+_asm("call eax")	//just hope and pray you put iVar1 in the correct spot!
+#else
+__asm{call eax}	//just hope and pray you put iVar1 in the correct spot!
 #endif
 #if defined (__POCC__) && !defined(__cplusplus)
   #pragma optimize()  // Restoring Optimizer state
@@ -351,8 +357,8 @@ void patch (PEInfo &  pe,int gameVersion)
           // Everything else gets the W2SE Patch.
           fk::Patch::Patch(pe.Offset(0x00118080),"SuperEdi.exe");
           // Lastly patch out resources for now. Particularly the Go buttons. Hope and pray this works...
-          // CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(235), 7400, , "StartDown")
-          // CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(237), 7400, , "StartUp")
+          PatchResource("frontend.exe","RT_BITMAP",MAKEINTRESOURCE(235),7400,"StartDown");
+          PatchResource("frontend.exe","RT_BITMAP",MAKEINTRESOURCE(237),7400,"StartUp");
         }
     }
   else

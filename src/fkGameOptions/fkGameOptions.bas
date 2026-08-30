@@ -37,10 +37,12 @@ FUNCTION VanillaGameStart(HndlWnd AS HWND) AS BOOLEAN
         REM Unfortunately I have to do inline assembly using the disassembly here. Too bad!
         REM I did decompilation for one function I ' m not doing it for another.
         REM Especially as that function has functions within functions. Functionception.
+        REM Also the latter 2 asm lines were taken from asking copilot on making it work with MSVC
         $ASM
             push [0x00518064] ;load game.dat as a parameter.
             mov ecx, [iVar1-0x08] ;setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
-            call [0x00402BA3] ;just hope and pray you put iVar1 in the correct spot!
+            mov eax, [0x00402BA3] ; have to do this otherwise MSVC throws a hissy fit. copies the call address into eax.
+            call eax ;just hope and pray you put iVar1 in the correct spot!
         $ASM
         IF iVar1 == 1 THEN
             REM WE MADE IT FINALLY!
@@ -59,7 +61,7 @@ SUB PatchResource(FileStub AS LPCWSTR, _
                   ResType AS LPCWSTR, _
                   PatchResName AS CONST LPCWSTR, _
                   PatchResSize AS DWORD, _
-                  PatchResDat AS LPVOID, _
+                  PatchResDat AS LPVOID = NULL, _
                   LangID AS WORD = 0)
     REM The Wall of parameters. Why Microsoft... why...
     REM Let's break down all these parameters for the poor sap that looks upon this:
@@ -91,8 +93,8 @@ SUB patch(pe AS PEInfo&, gameVersion AS INT)
             REM Everything else gets the W2SE Patch.
             fk::Patch::Patch(pe.Offset(0x00118080), "SuperEdi.exe")
             REM Lastly patch out resources for now. Particularly the Go buttons. Hope and pray this works...
-            REM CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(235), 7400, , "StartDown")
-            REM CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(237), 7400, , "StartUp")
+            CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(235), 7400, "StartDown")
+            CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(237), 7400, "StartUp")
         END IF
     ELSE
 
