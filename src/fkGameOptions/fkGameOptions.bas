@@ -10,6 +10,7 @@ $RESOURCE "C:\Users\aidan\Documents\MSVC-14.51.36231\MSVC\Windows Kits\10\bin\10
 #include "PEInfo.h"
 
 DIM iniEnableW2SE AS BOOLEAN
+DIM AS CONST CHAR SuperEdiCharSize[] = "SuperEdi.exe"
 
 SUB Configure()
     fk::Config config("fkGameOptions.ini")
@@ -18,6 +19,7 @@ SUB Configure()
     REM Then set its default setting when created.
     config.set("Frontend", "W2seEnabled", iniEnableW2SE)
 END SUB
+
 $COMMENT
     @TODO Once complete get the ASM blocks in the C++ code to be one.
 $COMMENT
@@ -37,7 +39,7 @@ FUNCTION VanillaGameStart(HndlWnd AS HWND) AS BOOLEAN
         REM Unfortunately I have to do inline assembly using the disassembly here. Too bad!
         REM I did decompilation for one function I ' m not doing it for another.
         REM Especially as that function has functions within functions. Functionception.
-        REM Also the latter 2 asm lines were taken from asking copilot on making it work with MSVC
+        REM Also the latter 2 asm lines were taken from asking copilot on making it work with MSVC.
         $ASM
             push [0x00518064] ;load game.dat as a parameter.
             mov ecx, [iVar1-0x08] ;setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
@@ -46,20 +48,22 @@ FUNCTION VanillaGameStart(HndlWnd AS HWND) AS BOOLEAN
         $ASM
         IF iVar1 == 1 THEN
             REM WE MADE IT FINALLY!
-            pHVar = ShellExecute(hHandle, "open", "worms2.exe", "colin.dat", NULL, SW_SHOW)
+            pHVar = ShellExecute(HndlWnd, "open", "worms2.exe", "colin.dat", NULL, SW_SHOW)
             REM Dunno why W2 needs to check if it ' s less than 32 for the instance. Maybe a null or 32-bit computing check?
             IF 32 < (INT)pHVar THEN
                 WaitForSingleObject(hHandle, INFINITE)
             END IF
         END IF
+        CloseHandle(hHandle)
+        GameStarted = TRUE
     END IF
     FUNCTION = GameStarted
 END FUNCTION
 
 REM This entire function will be added as a function to FrontendKitLib. So no one else will have to suffer what I had to make.
-SUB PatchResource(FileStub AS LPCWSTR, _
-                  ResType AS LPCWSTR, _
-                  PatchResName AS CONST LPCWSTR, _
+SUB PatchResource(FileStub AS LPCSTR, _
+                  ResType AS LPCSTR, _
+                  PatchResName AS CONST LPCSTR, _
                   PatchResSize AS DWORD, _
                   PatchResDat AS LPVOID = NULL, _
                   LangID AS WORD = 0)
@@ -73,10 +77,10 @@ SUB PatchResource(FileStub AS LPCWSTR, _
     DIM ResHandle AS HANDLE
     REM This really shouldn't be 3 whole functions. But Microsoft made it this way so no way around this other than this function.
     REM Also don't delete the files as this is just a overide. Not full replacement.
-    ResHandle = BeginUpdateResourceW(FileStub, FALSE)
-    UpdateResourceW(ResHandle, ResType, PatchResName, LangID, PatchResDat, PatchResSize)
+    ResHandle = BeginUpdateResource(FileStub, FALSE)
+    UpdateResource(ResHandle, ResType, PatchResName, LangID, PatchResDat, PatchResSize)
     REM Lastly finish up everything. Have I already made it clear that this is stupid?
-    EndUpdateResourceW(ResHandle, FALSE)
+    EndUpdateResource(ResHandle, FALSE)
 END SUB
 
 
@@ -91,7 +95,7 @@ SUB patch(pe AS PEInfo&, gameVersion AS INT)
             fk::Patch::jump(pe.Offset(0x0000A06F), 5, &VanillaGameStart, fk::IJ_JUMP)
             fk::Patch::jump(pe.Offset(0x0000A648), 5, &VanillaGameStart, fk::IJ_JUMP)
             REM Everything else gets the W2SE Patch.
-            fk::Patch::Patch(pe.Offset(0x00118080), "SuperEdi.exe")
+            fk::Patch::Patch(pe.Offset(0x00118080), SuperEdiCharSize)
             REM Lastly patch out resources for now. Particularly the Go buttons. Hope and pray this works...
             CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(235), 7400, "StartDown")
             CALL PatchResource("frontend.exe", "RT_BITMAP", MAKEINTRESOURCE(237), 7400, "StartUp")

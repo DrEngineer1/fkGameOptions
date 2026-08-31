@@ -4,57 +4,17 @@
 // *************************************************
 //    Translated for compiling with a C++ Compiler
 // *************************************************
-
-#ifndef __cplusplus
-  #error A C++ compiler is required
-#endif
-
-#ifdef _MSC_VER
-  #ifndef _CRT_SECURE_NO_WARNINGS
-    #define _CRT_SECURE_NO_WARNINGS
-  #endif
-#endif
-
+// You will not believe the amount of garbage that BCX throws on here. Thankfully this is what actually is necessary.
 #include <windows.h>    // WinApi
-#include <windowsx.h>   // WinApi
-#include <commctrl.h>   // WinApi
-#include <commdlg.h>    // WinApi
-#include <direct.h>     // WinApi
-#include <mmsystem.h>   // WinApi
-#include <oaidl.h>      // WinApi
-#include <objbase.h>    // WinApi
-#include <ocidl.h>      // WinApi
-#include <ole2.h>       // WinApi
-#include <oleauto.h>    // WinApi
-#include <olectl.h>     // WinApi
-#include <richedit.h>   // WinApi
 #include <shellapi.h>   // WinApi
-#include <shlobj.h>     // WinApi
-#include <urlmon.h>     // WinApi
-#include <wchar.h>      // WinApi
-#include <wctype.h>     // WinApi
-#include <tchar.h>      // WinApi
-#include <unknwn.h>     // WinApi
-#include <wingdi.h>     // WinApi
-#include <wininet.h>    // WinApi
-#include <winsock.h>    // WinApi
-#include <winuser.h>    // WinApi
-#include <stdbool.h>    // ISO StdLib
-#include <ctype.h>      // ISO StdLib
-#include <math.h>       // ISO StdLib
-#include <setjmp.h>     // ISO StdLib
 #include <stdarg.h>     // ISO StdLib
-#include <stddef.h>     // ISO StdLib
+/*
+stdio.h is here because you would not believe the amount of programs and code that would use this.
+Is it necessary? Likely not. But for the hell of it is here as well I suppose.
+*/
 #include <stdio.h>      // ISO StdLib
 #include <stdlib.h>     // ISO StdLib
 #include <string.h>     // ISO StdLib
-#include <time.h>       // ISO StdLib
-#include <process.h>    // ISO StdLib
-#include <inttypes.h>   // ISO StdLib
-#include <fcntl.h>      // POSIX
-#include <io.h>         // WinNT POSIX subset
-#include <conio.h>      // Primitive i/o
-
 
 // *************************************************
 //            System Defined Macros
@@ -62,6 +22,7 @@
 
 #define BCXSTRSIZE 2048
 #include <filesystem>
+#include "fkGameOptions.h"
 #include "fkConfig.h"
 #include "fkPatch.h"
 #include "fkUtils.h"
@@ -71,97 +32,13 @@
 //                  Compiler Macros
 // *************************************************
 
-#if defined(__cplusplus)
-  #define overloaded
-  #define C_EXPORT EXTERN_C __declspec(dllexport)
-  #define C_IMPORT EXTERN_C __declspec(dllimport)
-#else
-  #define C_EXPORT __declspec(dllexport)
-  #define C_IMPORT __declspec(dllimport)
-#endif
-
 // *************************************************
 //                   Microsoft VC++
 // *************************************************
 
-#ifndef DECLSPEC_UUID
-  #if(_MSC_VER >= 1100) && defined(__cplusplus)
-    #define DECLSPEC_UUID(x)  __declspec(uuid(x))
-  #else
-    #define DECLSPEC_UUID(x)
-  #endif
-#endif
-#if (_MSC_VER >= 1900)            // earlier versions untested
-   #include <intrin.h>
-      #ifndef _rdtsc
-         #define _rdtsc __rdtsc   // MSVC uses 2 underscores
-      #endif
-   #pragma warning(disable: 4018) // signed/unsigned mismatch warnings
-   #pragma warning(disable: 4100) // unreferenced argument warnings
-   #pragma warning(disable: 4244) // conversion from type1 to type2 warnings
-   #pragma warning(disable: 4267) // conversion from type1 to type2 warnings
-   #pragma warning(disable: 4305) // truncation from double to float warnings
-   #pragma warning(disable: 4800) // forcing value to bool warnings
-   #pragma warning(disable: 4838) // conversion from type1 to type2 warnings
-#endif
-
-// *************************************************
-//                  GCC and CLANG
-// *************************************************
-
-#if defined(__GNUC__) || defined(__clang__)
-   #ifndef __BCPLUSPLUS__
-      #include <x86intrin.h>
-   #endif
-   #pragma GCC diagnostic ignored "-Wwrite-strings"
-   #pragma GCC diagnostic ignored "-Wunused-parameter"
-   #pragma GCC diagnostic ignored "-Wunknown-pragmas"
-   #pragma GCC diagnostic ignored "-Wdangling-else"
-   #pragma GCC diagnostic ignored "-Wdeprecated"
-#endif
-
-// *************************************************
-//                  Embarcadero C++
-// *************************************************
-
-#if defined(__BCPLUSPLUS__)
-      #if defined (_clang__)
-          #include <mmintrin.h>
-      #endif
-      #define _kbhit kbhit
-      #ifndef _rdtsc
-         #define _rdtsc __rdtsc  // Uses 2 underscores
-      #endif
-#endif
-
-
 // *************************************************
 // Instruct Linker to Search Object/Import Libraries
 // *************************************************
-
-#if !defined(__GNUC__) && !defined(__TINYC__)
-   #if !(defined(__BCPLUSPLUS__) && defined(_WIN64))
-    #pragma comment(lib,"kernel32.lib")
-    #pragma comment(lib,"user32.lib")
-    #pragma comment(lib,"gdi32.lib")
-    #pragma comment(lib,"comctl32.lib")
-    #pragma comment(lib,"advapi32.lib")
-    #pragma comment(lib,"winspool.lib")
-    #pragma comment(lib,"shell32.lib")
-    #pragma comment(lib,"msimg32.lib")
-    #pragma comment(lib,"ole32.lib")
-    #pragma comment(lib,"oleaut32.lib")
-    #pragma comment(lib,"uuid.lib")
-    #pragma comment(lib,"odbc32.lib")
-    #pragma comment(lib,"odbccp32.lib")
-    #pragma comment(lib,"winmm.lib")
-    #pragma comment(lib,"comdlg32.lib")
-    #pragma comment(lib,"imagehlp.lib")
-    #pragma comment(lib,"version.lib")
-    #pragma comment(lib,"wininet.lib")
-    #pragma comment(lib,"urlmon.lib")
-  #endif
-#endif
 
 // *************************************************
 //               Standard Prototypes
@@ -173,9 +50,6 @@ char*   join (int, ... );
 // *************************************************
 //          User Defined Types And Unions
 // *************************************************
-//     @TODO Once complete get the ASM blocks in the C++ code to be one.
-// @TODO Once Complete make sure to convert the DllMain C++ code into a switch case to make WinAPI happy.
-// Mostly to be safe and to make sure MSVC doesn ' t get a bug up its bum.
 
 // *************************************************
 //                System Variables
@@ -188,17 +62,15 @@ static char    CRLF[3]= {13,10,0}; // Carr Rtn & Line Feed
 //            User's Global Variables
 // *************************************************
 
-static BOOL    iniEnableW2SE;
+BOOL    iniEnableW2SE;
+const char*  SuperEdiCharSize = "SuperEdi.exe";
 
 // *************************************************
 //               User's Prototypes
 // *************************************************
-
-void    Configure (void);
-BOOL    VanillaGameStart (HWND);
-void    PatchResource (LPCWSTR,LPCWSTR,const LPCWSTR,DWORD,LPVOID= NULL,WORD= 0);
-void    patch (PEInfo &,int);
-__declspec(dllexport) BOOL WINAPI DllMain (HINSTANCE,DWORD,LPVOID);
+//commented out but not in the header file just in case it does need them.
+//void    Configure (void);
+//void    patch (PEInfo &,int);
 
 // *************************************************
 //            User's Global Initialized Arrays
@@ -258,9 +130,9 @@ void Configure ()
 {
   fk::Config config("fkGameOptions.ini");
   // Load the ini settings.
-  config .get("Frontend","W2seEnabled",iniEnableW2SE,FALSE);
+  config.get("Frontend","W2seEnabled",iniEnableW2SE,FALSE);
   // Then set its default setting when created.
-  config .set("Frontend","W2seEnabled",iniEnableW2SE);
+  config.set("Frontend","W2seEnabled",iniEnableW2SE);
 }
 
 
@@ -269,10 +141,10 @@ BOOL VanillaGameStart (HWND HndlWnd)
   // This is a decompiled and translated version of the actual start game script called by the frontend as output by Ghidra.
   // With maybe an alteration here and there. Here for the purpose of the quick game buttons keeping their vanilla functionality.
   // Meanwhile the other start game buttons launch to W2SE. Hope and pray no one plays pure vanilla Worms 2 these days!
-  BOOLEAN  GameStarted= {0};
-  HANDLE   hHandle= {0};
-  int      iVar1= {0};
-  HINSTANCE  pHVar= {0};
+  BOOLEAN  GameStarted;
+  HANDLE   hHandle;
+  int      iVar1;
+  HINSTANCE  pHVar;
   if(HndlWnd==NULL ){
       GameStarted=FALSE;
     }
@@ -282,70 +154,51 @@ BOOL VanillaGameStart (HWND HndlWnd)
       // Unfortunately I have to do inline assembly using the disassembly here. Too bad!
       // I did decompilation for one function I ' m not doing it for another.
       // Especially as that function has functions within functions. Functionception.
-      // Also the latter 2 asm lines were taken from asking copilot on making it work with MSVC
-#if defined (__POCC__) && !defined(__cplusplus)
-  #pragma optimize(none)  // No Optimizations in ASM block
-#elif !defined (__cplusplus)
-  #pragma optimize(0)  // No Optimizations in ASM block
-#endif
-#if !defined(__POCC__) && !defined (__cplusplus)
-_asm("push [0x00518064]")	//load game.dat as a parameter.
-#else
-__asm{push [0x00518064]}	//load game.dat as a parameter.
-#endif
-#if !defined(__POCC__) && !defined (__cplusplus)
-_asm("mov ecx, [iVar1-0x08]")	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
-#else
-__asm{mov ecx, [iVar1-0x08]}	//setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
-#endif
-#if !defined(__POCC__) && !defined (__cplusplus)
-_asm("mov eax, [0x00402BA3]")	// have to do this otherwise MSVC throws a hissy fit. copies the call address into eax.
-#else
-__asm{mov eax, [0x00402BA3]}	// have to do this otherwise MSVC throws a hissy fit. copies the call address into eax.
-#endif
-#if !defined(__POCC__) && !defined (__cplusplus)
-_asm("call eax")	//just hope and pray you put iVar1 in the correct spot!
-#else
-__asm{call eax}	//just hope and pray you put iVar1 in the correct spot!
-#endif
-#if defined (__POCC__) && !defined(__cplusplus)
-  #pragma optimize()  // Restoring Optimizer state
-#elif !defined (__cplusplus)
-  #pragma optimize(1)  // Restoring Optimizer state
-#endif
+      // Also the latter 2 asm lines were taken from asking copilot on making it work with MSVC.
+    __asm{
+      push [0x00518064]	;load game.dat as a parameter.
+      mov ecx, [iVar1-0x08]	;setup the original decompiled line of: iVar1 = thunk_FUN_00426e38(this, s_data\game.dat_00518064)
+      mov eax, [0x00402BA3]	;have to do this otherwise MSVC throws a hissy fit. copies the call address into eax.
+      call eax ;just hope and pray you put iVar1 in the correct spot!
+      }
       if(iVar1==1 ){
           // WE MADE IT FINALLY!
-          pHVar=ShellExecute(hHandle,"open","worms2.exe","colin.dat",NULL,SW_SHOW);
+          pHVar=ShellExecute(HndlWnd,"open","worms2.exe","colin.dat",NULL,SW_SHOW);
           // Dunno why W2 needs to check if it ' s less than 32 for the instance. Maybe a null or 32-bit computing check?
           if(32<(int)pHVar ){
               WaitForSingleObject(hHandle,INFINITE);
             }
         }
+      CloseHandle(hHandle);
+      GameStarted=TRUE;
     }
   return GameStarted;
 }
 
 
-void PatchResource (LPCWSTR  FileStub,LPCWSTR  ResType,const LPCWSTR  PatchResName,DWORD PatchResSize,LPVOID  PatchResDat,WORD  LangID)
+void PatchResource (LPCSTR FileStub, LPCSTR ResType, const LPCSTR PatchResName, DWORD PatchResSize, LPVOID PatchResDat, WORD LangID)
 {
   // The Wall of parameters. Why Microsoft... why...
-  // Let's break down all these parameters for the poor sap that looks upon this:
-  // FileStub: the OG file name.
-  // ResType: The resource type for both the OG and Patch.
-  // PatchResName: The name of our resource to overide.
-  // LangID: (Optional) The language of the resource. Defaulted to Language Neutral as it's a required parameter in UpdateResource.
-  // PatchResDat: (Optional) Binary data of the resource. Equivalent to lpData in UpdateResoure.
-  HANDLE   ResHandle= {0};
+  // Let's break down all these parameters for the poor sap (that being you likely) that looks upon this:
+  //--------------------------------------------------------------------------------------------------------------------------------
+  //| FileStub: the executable name.
+  //| ResType: The resource type for both the OG and Patch.
+  //| PatchResName: The name of our resource to overide.
+  //| PatchResSize: The size of our patch. Must be the same as the OG.
+  //| PatchResDat: (Optional) Binary data of the resource. Equivalent to lpData in UpdateResoure.
+  //| LangID: (Optional) The language of the resource. Defaulted to Language Neutral as it's a required parameter in UpdateResource.
+  //--------------------------------------------------------------------------------------------------------------------------------
+  HANDLE   ResHandle;
   // This really shouldn't be 3 whole functions. But Microsoft made it this way so no way around this other than this function.
   // Also don't delete the files as this is just a overide. Not full replacement.
-  ResHandle=BeginUpdateResourceW(FileStub,FALSE);
-  UpdateResourceW(ResHandle,ResType,PatchResName,LangID,PatchResDat,PatchResSize);
+  ResHandle=BeginUpdateResource(FileStub,FALSE);
+  UpdateResource(ResHandle,ResType,PatchResName,LangID,PatchResDat,PatchResSize);
   // Lastly finish up everything. Have I already made it clear that this is stupid?
-  EndUpdateResourceW(ResHandle,FALSE);
+  EndUpdateResource(ResHandle,FALSE);
 }
 
 
-void patch (PEInfo &  pe,int gameVersion)
+void patch (PEInfo& pe,int gameVersion)
 {
   if(gameVersion==fk::GAME_VERSION_TRY ){
       if(iniEnableW2SE==TRUE ){
@@ -355,7 +208,7 @@ void patch (PEInfo &  pe,int gameVersion)
           fk::Patch::jump(pe.Offset(0x0000A06F),5, &VanillaGameStart,fk::IJ_JUMP);
           fk::Patch::jump(pe.Offset(0x0000A648),5, &VanillaGameStart,fk::IJ_JUMP);
           // Everything else gets the W2SE Patch.
-          fk::Patch::Patch(pe.Offset(0x00118080),"SuperEdi.exe");
+          fk::Patch::Patch(pe.Offset(0x00118080),SuperEdiCharSize);
           // Lastly patch out resources for now. Particularly the Go buttons. Hope and pray this works...
           PatchResource("frontend.exe","RT_BITMAP",MAKEINTRESOURCE(235),7400,"StartDown");
           PatchResource("frontend.exe","RT_BITMAP",MAKEINTRESOURCE(237),7400,"StartUp");
@@ -366,19 +219,22 @@ void patch (PEInfo &  pe,int gameVersion)
     }
 }
 
-
-__declspec(dllexport) BOOL WINAPI DllMain (HINSTANCE  hInst,DWORD Reason,LPVOID  Reserved)
+BOOL WINAPI DllMain(
+    HINSTANCE hinstDLL,
+    DWORD fdwReason,     
+    LPVOID lpvReserved ) 
 {
-  //**************************************************************
-  if(Reason==DLL_PROCESS_ATTACH ){
-      // Shameless copy+paste and conversion job from other FrontEndKit Modules.
-      // But if it ' s what they use by default i guess it'll do.
-      PEInfo pe;
-      int      tds=pe.FH->TimeDateStamp;
-      int      version=fk::getGameVersion(tds);
-      BOOLEAN  SuperEdiExists=std::filesystem::exists("SuperEdi.exe");
-      // Check to see if W2SE Exists.
-      if(SuperEdiExists ){
+    switch( fdwReason ) 
+    { 
+        case DLL_PROCESS_ATTACH:
+        // Shameless copy+paste and conversion job from other FrontEndKit Modules.
+        // But if it ' s what they use by default i guess it'll do.
+        PEInfo pe;
+        int      tds=pe.FH->TimeDateStamp;
+        int      version=fk::getGameVersion(tds);
+        BOOLEAN  SuperEdiExists=std::filesystem::exists("SuperEdi.exe");
+        // Check to see if W2SE Exists.
+        if(SuperEdiExists ){
           // Initialize the module by checking the game version first.
           if(version==fk::GAME_VERSION_NONE ){
               char    MyMsg2[BCXSTRSIZE];
@@ -393,26 +249,17 @@ __declspec(dllexport) BOOL WINAPI DllMain (HINSTANCE  hInst,DWORD Reason,LPVOID 
               MessageBox (GetActiveWindow(),"fkGameOptions has been loaded! HUZZAH!","",0 );
             }
         }
-      else
-        {
-          // If not bring up a Error message and detatch the module.
-          char    MyMsg1[BCXSTRSIZE];
-          strcpy(MyMsg1, join(6,"Worms 2 Super Editor was not found in your Worms 2 directory. ",CRLF,"Please check to see if it is installed in your root Worms 2 directory: e.g. C:\\GOG Games\\Worms 2",CRLF,CRLF,"Click OK to detach this module."));
-          MessageBox (GetActiveWindow(),MyMsg1,"fkGameOptions: SuperEdi.exe not found!",MB_OK|MB_ICONHAND|MB_APPLMODAL );
-          return FALSE;
-        }
-      //**************************************************************
-      goto L1000;
+        else
+          {
+            // If not bring up a Error message and detatch the module.
+            char    MyMsg1[BCXSTRSIZE];
+            strcpy(MyMsg1, join(6,"Worms 2 Super Editor was not found in your Worms 2 directory. ",CRLF,"Please check to see if it is installed in your root Worms 2 directory: e.g. C:\\GOG Games\\Worms 2",CRLF,CRLF,"Click OK to detach this module."));
+            MessageBox (GetActiveWindow(),MyMsg1,"fkGameOptions: SuperEdi.exe not found!",MB_OK|MB_ICONHAND|MB_APPLMODAL );
+            return FALSE;
+          }
+            break;
+        case DLL_PROCESS_DETACH:
+            break;
     }
-  if(Reason==DLL_PROCESS_DETACH ){
-    }
-L1000:;
-  return TRUE;
+    return TRUE;
 }
-
-
-
-// *************************************************
-//                  Main Program
-// *************************************************
-
