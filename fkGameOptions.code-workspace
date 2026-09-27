@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"terminal.integrated.defaultProfile.windows": "MSVC Developer Command Prompt (32-bit)",
+		"makefile.makePath": "nmake",
+		"makefile.configurations": [
+			{
+				"name": "NMake Default",
+				"makeArgs":[]
+			}
+		],
+		"makefile.makefilePath": "MAKEFILE",
+		"makefile.loggingLevel": "Debug"
+	}
+}

@@ -1,5 +1,6 @@
 #include "fkUtils.h"
 #include <string>
+#include <vector>
 #include "fkPatch.h"
 
 namespace fk
@@ -39,5 +40,33 @@ namespace fk
 			sprintf_s(buffer, "Error code 0x%08X.", error);
 			return buffer;
 		}
+	}
+
+	//I never used memcopy so i'm not sure if it will get freed once it's done with it. So there's potential for this to cause a memory leak.
+	//Also is generated with Google's Gemini. Surprisingly works given that thing's track record. Looking at you for using glue in pizza sauce.
+	std::vector<BYTE> GetResourceBytes(LPCWSTR hModule, UINT lpName, LPCTSTR lpType) {
+    // 1. Find the resource
+    HINSTANCE HandleDLL = GetModuleHandleW(hModule);
+    HRSRC hResInfo = FindResource(HandleDLL, MAKEINTRESOURCE(lpName), lpType);
+    if (!hResInfo) return {};
+
+    // 2. Load the resource into memory
+    HGLOBAL hResData = LoadResource(HandleDLL, hResInfo);
+    if (!hResData) return {};
+
+    // 3. Get the size of the resource
+    DWORD dataSize = SizeofResource(HandleDLL, hResInfo);
+    if (dataSize == 0) return {};
+
+    // 4. Lock the resource to get a pointer to the raw bytes
+    LPVOID pData = LockResource(hResData);
+    if (!pData) return {};
+
+    // 5. Copy bytes into a vector
+    std::vector<BYTE> bytes(dataSize);
+    //This is what the vector bytes actually returns. Wish i could free this in memory but I don't have a method of doing so here.
+    memcpy(bytes.data(), pData, dataSize);
+
+    return bytes;
 	}
 }

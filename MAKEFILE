@@ -1,0 +1,105 @@
+# Makefile for fkGameOptions DLL
+# Build with: nmake or nmake /f Makefile
+# Compatible with Windows 10 onwards it seems.
+# Compiler and flags
+CC = cl
+LD = link
+RC = rc
+CFLAGS1 = /std:c++20 /utf-8 /c /permissive /O2 /Gd /W4 /MT /I $(INCLUDES) -D NTDDI_VERSION=0x0A000000 -D_WIN32_WINNT=0x0A000000 -D_CRT_SECURE_NO_WARNINGS
+# Doing this as the compiler requires these two to come after everything else.
+CFLAGS2 = /Fo: "obj\\" /EHsc /Tp
+LDFLAGS = /DLL /RELEASE /MACHINE:X86 /SUBSYSTEM:WINDOWS
+RCFLAGS = /fo obj\PatchResources.res /l 0x0
+
+# Output directory
+OUTDIR = bin
+OBJDIR = obj
+
+# FrontendKitLib source files
+FK_SRCS = \
+	src\FrontendKitLib\src\PEInfo.cpp \
+	src\FrontendKitLib\src\fkConfig.cpp \
+	src\FrontendKitLib\src\fkPatch.cpp \
+	src\FrontendKitLib\src\fkUtils.cpp \
+	src\FrontendKitLib\src\pch.cpp
+
+# fkGameOptions source files
+GAME_SRCS = \
+	src\fkGameOptions\fkGameOptions.cpp
+
+# Resource files
+RESOURCES = \
+	src\fkGameOptions\PatchResources.rc
+
+# Include directories
+INCLUDES = \
+	src\FrontendKitLib\include
+
+# Object files
+FK_OBJS = \
+	$(OBJDIR)\PEInfo.obj \
+	$(OBJDIR)\fkConfig.obj \
+	$(OBJDIR)\fkPatch.obj \
+	$(OBJDIR)\fkUtils.obj \
+	$(OBJDIR)\pch.obj
+GAME_OBJS = \
+	$(OBJDIR)\fkGameOptions.obj
+RESOURCE_OBJS = \
+	$(OBJDIR)\PatchResources.res
+ALL_OBJS = \
+	$(FK_OBJS) \
+	$(GAME_OBJS) \
+	$(RESOURCE_OBJS)
+
+# Output DLL
+TARGET = \
+	"C:\GOG Games\Worms 2\fkGameOptions.dll"
+
+# Default target
+all: $(OUTDIR) $(OBJDIR) $(TARGET)
+
+# Create output directories
+$(OUTDIR):
+	@if not exist $(OUTDIR) mkdir $(OUTDIR)
+
+$(OBJDIR):
+	@if not exist $(OBJDIR) mkdir $(OBJDIR)
+
+# Link DLL
+$(TARGET): $(ALL_OBJS)
+	$(LD) $(LDFLAGS) /OUT:$@ $(ALL_OBJS) kernel32.lib user32.lib gdi32.lib shell32.lib advapi32.lib ole32.lib oleaut32.lib
+
+# FrontendKitLib objects
+$(OBJDIR)\PEInfo.obj: src\FrontendKitLib\src\PEInfo.cpp
+	$(CC) $(CFLAGS1) $(CFLAGS2) $**
+
+$(OBJDIR)\fkConfig.obj: src\FrontendKitLib\src\fkConfig.cpp
+	$(CC) $(CFLAGS1) $(CFLAGS2) $**
+
+$(OBJDIR)\fkPatch.obj: src\FrontendKitLib\src\fkPatch.cpp
+	$(CC) $(CFLAGS1) $(CFLAGS2) $**
+
+$(OBJDIR)\fkUtils.obj: src\FrontendKitLib\src\fkUtils.cpp
+	$(CC) $(CFLAGS1) $(CFLAGS2) $**
+
+$(OBJDIR)\pch.obj: src\FrontendKitLib\src\pch.cpp
+	$(CC) $(CFLAGS1) $(CFLAGS2) $**
+
+# fkGameOptions objects
+$(OBJDIR)\fkGameOptions.obj: src\fkGameOptions\fkGameOptions.cpp
+	$(CC) $(CFLAGS1) $(CFLAGS2) $** 
+
+# Resource objects
+$(OBJDIR)\PatchResources.res: src\fkGameOptions\PatchResources.rc
+	$(RC) $(RCFLAGS) $**
+
+# Clean build artifacts
+clean:
+	@if exist $(OBJDIR) rmdir /s /q $(OBJDIR)
+	@if exist $(OUTDIR) rmdir /s /q $(OUTDIR)
+
+# Rebuild
+rebuild: clean all
+
+# Phony targets
+.PHONY: all clean rebuild

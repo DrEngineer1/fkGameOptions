@@ -16,8 +16,8 @@ SUB Configure()
     fk::Config config("fkGameOptions.ini")
     REM Load the ini settings.
     config.get("Frontend", "W2seEnabled", iniEnableW2SE, FALSE)
-    REM Then set its default setting when created.
-    config.set("Frontend", "W2seEnabled", iniEnableW2SE)
+REM Then set its default setting when created.
+config.SET("Frontend", "W2seEnabled", iniEnableW2SE)
 END SUB
 
 $COMMENT
@@ -62,21 +62,21 @@ END FUNCTION
 
 REM This entire function will be added as a function to FrontendKitLib. So no one else will have to suffer what I had to make.
 SUB PatchResource(FileStub AS LPCSTR, _
-                  ResType AS LPCSTR, _
-                  PatchResName AS CONST LPCSTR, _
-                  PatchResSize AS DWORD, _
-                  PatchResDat AS LPVOID = NULL, _
-                  LangID AS WORD = 0)
+    ResType AS LPCSTR, _
+    PatchResName AS CONST LPCSTR, _
+    PatchResSize AS DWORD, _
+    PatchResDat AS LPVOID = NULL, _
+    LangID AS WORD = 0)
     REM The Wall of parameters. Why Microsoft... why...
-    REM Let's break down all these parameters for the poor sap that looks upon this:
+    REM Let ' s break down all these parameters for the poor sap that looks upon this:
     REM FileStub: the OG file name.
     REM ResType: The resource type for both the OG and Patch.
     REM PatchResName: The name of our resource to overide.
-    REM LangID: (Optional) The language of the resource. Defaulted to Language Neutral as it's a required parameter in UpdateResource.
+    REM LangID: (Optional) The language of the resource. Defaulted to Language Neutral as it ' s a required parameter in UpdateResource.
     REM PatchResDat: (Optional) Binary data of the resource. Equivalent to lpData in UpdateResoure.
     DIM ResHandle AS HANDLE
-    REM This really shouldn't be 3 whole functions. But Microsoft made it this way so no way around this other than this function.
-    REM Also don't delete the files as this is just a overide. Not full replacement.
+    REM This really shouldn ' t be 3 whole functions. But Microsoft made it this way so no way around this other than this function.
+    REM Also don ' t delete the files as this is just a overide. Not full replacement.
     ResHandle = BeginUpdateResource(FileStub, FALSE)
     UpdateResource(ResHandle, ResType, PatchResName, LangID, PatchResDat, PatchResSize)
     REM Lastly finish up everything. Have I already made it clear that this is stupid?

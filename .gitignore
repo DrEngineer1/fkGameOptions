@@ -3,3 +3,5 @@ src/fkGameOptions/fkGameOptions.def
 src/fkGameOptions/fkGameOptions.exp
 src/fkGameOptions/fkGameOptions.lib
 src/fkGameOptions/uuid.lib
+.vscode/c_cpp_properties.json
+*.res
